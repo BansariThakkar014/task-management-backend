@@ -1,0 +1,5 @@
+{
+  "listSuccess": "User list fetched successfully.",
+  "deleted": "User deleted successfully.",
+  "notFound": "User not found."
+}

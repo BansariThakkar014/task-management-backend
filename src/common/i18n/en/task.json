@@ -1,0 +1,8 @@
+{
+  "created": "Task created successfully.",
+  "updated": "Task updated successfully.",
+  "deleted": "Task deleted successfully.",
+  "listSuccess": "Task list fetched successfully.",
+  "notFound": "Task not found.",
+  "alreadyExists": "Task already exists."
+}

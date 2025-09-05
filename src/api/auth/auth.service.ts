@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { LoginRequestDto, LoginResponse, LoginResponseDto } from './dto/login.dto';
 import { UserResponseDto } from '../user/dto/user-response.dto';
 import { MailService } from 'src/common/services/mail.service';
-import * as path from 'path';
+import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +20,8 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
+    private readonly i18n: I18nService,
+
 
   ) { }
 
@@ -42,7 +44,7 @@ export class AuthService {
     const isExists = await this.userRepository.findOne({ where: { email }, withDeleted: true })
     if (isExists) {
       throw new CustomHttpException(
-        'User already exists.',
+        await this.i18n.translate('auth.emailExists'),
         HttpStatus.CONFLICT,
         'CONFLICT'
       )
@@ -77,7 +79,9 @@ export class AuthService {
       },
     });
 
-    return this.responseService.formatCreated(null, 'User registered successfully.')
+    return this.responseService.formatCreated(null, 
+      await this.i18n.translate('auth.signupSuccess')
+    )
 
   }
 
@@ -87,7 +91,7 @@ export class AuthService {
     const user = await this.userRepository.findOneBy({ email: body.email })
     if (!user) {
       throw new CustomHttpException(
-        'Invalid email.',
+        await this.i18n.translate('auth.invalidCredentials'),
         HttpStatus.UNAUTHORIZED,
         'UNAUTHORIZED'
       )
@@ -96,7 +100,7 @@ export class AuthService {
     // Check if user active or not
     if (!user.isActive) {
       throw new CustomHttpException(
-        'User is not active.',
+        await this.i18n.translate('auth.accountInactive'),
         HttpStatus.UNAUTHORIZED,
         'UNAUTHORIZED'
       )
@@ -106,7 +110,7 @@ export class AuthService {
     const validatePassword = await this.validatePassword(body.password, user)
     if (!validatePassword) {
       throw new CustomHttpException(
-        'Invalid password.',
+        await this.i18n.translate('auth.invalidCredentials'),
         HttpStatus.UNAUTHORIZED,
         'UNAUTHORIZED'
       )
@@ -136,6 +140,8 @@ export class AuthService {
       user: userData
     }
 
-    return this.responseService.formatSuccess(loginResponseData, 'User logged in successfully.')
+    return this.responseService.formatSuccess(loginResponseData, 
+      await this.i18n.translate('auth.loginSuccess')
+    )
   }
 }

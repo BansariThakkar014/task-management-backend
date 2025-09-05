@@ -11,12 +11,22 @@ import { RolesGuard } from 'src/common/guards/role.guard';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { Roles } from 'src/common/decorators/role.decorators';
 import { UserRole } from '../user/entity/user.entity';
-import { TaskListResponse, TaskResponse } from './dto/task-response.dto';
+import { TaskListResponse, TaskResponse, TaskResponseDto } from './dto/task-response.dto';
+import { plainToInstance } from 'class-transformer';
 
 @ApiTags('Tasks')
 @Controller('task')
 @UseFilters(CustomExceptionFilter)
-// @ApiHeader({ name: 'Authorization', required: true })
+@ApiHeader({
+  name: 'Accept-Language',
+  description: 'Language for response messages (e.g., en, hi)',
+  required: false,
+  schema: {
+    default: 'en',
+    type: 'string',
+    enum: ['en', 'hi'],
+  },
+})
 @ApiBearerAuth('JWT-auth')
 
 export class TaskController {
@@ -32,16 +42,6 @@ export class TaskController {
   @Roles(UserRole.USER)
   createTask(@Body() body: CreateTaskDto, @Req() req: RequestUser): Promise<BaseResponseDto<null>> {
     return this.taskService.createTask(body, +req.user.sub)
-  }
-
-  // Get all tasks by logged in user
-  @Get()
-  @ApiOperation({ summary: 'Get all tasks by logged in user' })
-  @ApiResponse({ status: 200, description: 'Tasks fetched successfully.' })
-  @UseGuards(JwtAuthGuard, RolesGuard, CheckUserExistGuard)
-  @Roles(UserRole.USER)
-  getAllTasks(@Query() listTaskDto: ListTaskDto, @Req() req: RequestUser): Promise<TaskListResponse> {
-    return this.taskService.getAllTasks(listTaskDto, +req.user.sub)
   }
 
   // Get task by id by logged in user
@@ -63,6 +63,21 @@ export class TaskController {
   @Roles(UserRole.ADMIN)
   getUserTask(@Query() listTaskDto: ListTaskDto, @Param('id') userId: string): Promise<TaskListResponse> {
     return this.taskService.getUserTask(listTaskDto, +userId)
+  }
+
+  // Get all tasks by logged in user
+  @Get()
+  @ApiOperation({ summary: 'Get all tasks by logged in user' })
+  @ApiResponse({ status: 200, description: 'Tasks fetched successfully.' })
+  @UseGuards(JwtAuthGuard, RolesGuard, CheckUserExistGuard)
+  @Roles(UserRole.USER)
+  async getAllTasks(@Query() listTaskDto: ListTaskDto, @Req() req: RequestUser): Promise<TaskListResponse> {
+    const result = await this.taskService.getAllTasks(listTaskDto, +req.user.sub)
+    if (result.data) {
+      result.data.items = plainToInstance(TaskResponseDto, result.data.items, { excludeExtraneousValues: true })
+    }
+
+    return result;
   }
 
   // Update task by id by logged in user

@@ -7,6 +7,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getDatabaseConfig } from './config/database.config';
+import { I18nModule } from 'nestjs-i18n';
+import { i18nConfig } from './config/i18.config';
 
 @Module({
   imports: [
@@ -20,6 +22,7 @@ import { getDatabaseConfig } from './config/database.config';
         getDatabaseConfig(configService),
       inject: [ConfigService],
     }),
+    I18nModule.forRoot(i18nConfig),
     CommonModule, AuthModule, UserModule, TaskModule]
 })
 export class AppModule { }

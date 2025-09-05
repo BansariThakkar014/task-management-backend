@@ -9,12 +9,14 @@ import { ListTaskDto } from './dto/list-task.dto';
 import { TaskListResponse, TaskResponse, TaskResponseDto } from './dto/task-response.dto';
 import { Status } from './entity/task.entity';
 import { Not } from 'typeorm';
+import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class TaskService {
   constructor(private readonly taskRepository: TaskRepository,
     private readonly userRepository: UserRepository,
-    private readonly responseService: ResponseService
+    private readonly responseService: ResponseService,
+    private readonly i18n: I18nService
   ) { }
 
   // Create tasks by logged in user
@@ -23,7 +25,7 @@ export class TaskService {
     const isTaskExists = await this.taskRepository.findOneBy({ title: body.title, userId: loggedInUserId, isActive: true })
     if (isTaskExists) {
       throw new CustomHttpException(
-        'Task already exists.',
+        await this.i18n.translate('task.alreadyExists'),
         HttpStatus.CONFLICT,
         'CONFLICT'
       );
@@ -38,7 +40,7 @@ export class TaskService {
     // Create task
     await this.taskRepository.createTask(data)
 
-    return this.responseService.formatCreated(null, 'Task created successfully.')
+    return this.responseService.formatCreated(null, await this.i18n.translate('task.created'));
   }
 
   // Get all tasks by logged in user
@@ -53,6 +55,7 @@ export class TaskService {
         't.id',
         't.title',
         't.description',
+        't.status',
         't.isActive',
         't.createdAt',
       ])
@@ -76,7 +79,7 @@ export class TaskService {
       total,
       page,
       limit,
-      'Tasks fetched successfully.');
+      await this.i18n.translate('task.listSuccess'));
   }
 
   // Get task by id by logged in user
@@ -85,7 +88,7 @@ export class TaskService {
     const isTaskExists = await this.taskRepository.findOneBy({ id: taskId, userId: loggedInUserId, isActive: true })
     if (!isTaskExists) {
       throw new CustomHttpException(
-        'Task not found.',
+        await this.i18n.translate('task.notFound'),
         HttpStatus.NOT_FOUND,
         'NOT_FOUND'
       );
@@ -100,7 +103,7 @@ export class TaskService {
       createdAt: isTaskExists.createdAt
     }
 
-    return this.responseService.formatSuccess(result, 'Task fetched successfully.')
+    return this.responseService.formatSuccess(result, await this.i18n.translate('task.listSuccess'));
   }
 
   // Get all tasks
@@ -112,6 +115,7 @@ export class TaskService {
         't.id',
         't.title',
         't.description',
+        't.status',
         't.isActive',
         't.createdAt'
       ])
@@ -125,7 +129,7 @@ export class TaskService {
 
     const [data, total] = await query.orderBy('id', 'DESC').getManyAndCount();
 
-    return this.responseService.formatPaginated(data, total, page, limit, 'Tasks fetched Successfully.');
+    return this.responseService.formatPaginated(data, total, page, limit, await this.i18n.translate('task.listSuccess'));
   }
 
   // Update task by id by logged in user
@@ -134,7 +138,7 @@ export class TaskService {
     const isTaskExists = await this.taskRepository.findOneBy({ id: taskId, userId: loggedInUserId, isActive: true })
     if (!isTaskExists) {
       throw new CustomHttpException(
-        'Task not found.',
+        await this.i18n.translate('task.notFound'),
         HttpStatus.NOT_FOUND,
         'NOT_FOUND'
       );
@@ -145,7 +149,7 @@ export class TaskService {
       const isTaskTitleExists = await this.taskRepository.findOne({ where: { title: body.title, userId: loggedInUserId, isActive: true, id: Not(taskId) } },)
       if (isTaskTitleExists) {
         throw new CustomHttpException(
-          'Task title already exists.',
+          await this.i18n.translate('task.alreadyExists'),
           HttpStatus.CONFLICT,
           'CONFLICT'
         );
@@ -154,7 +158,7 @@ export class TaskService {
 
     await this.taskRepository.update(taskId, body)
 
-    return this.responseService.formatSuccess(null, 'Task updated successfully.')
+    return this.responseService.formatSuccess(null, await this.i18n.translate('task.updated'));
   }
 
   // Delete task by id by logged in user
@@ -163,7 +167,7 @@ export class TaskService {
     const isTaskExists = await this.taskRepository.findOneBy({ id: taskId, userId: loggedInUserId, isActive: true })
     if (!isTaskExists) {
       throw new CustomHttpException(
-        'Task not found.',
+        await this.i18n.translate('task.notFound'),
         HttpStatus.NOT_FOUND,
         'NOT_FOUND'
       );
@@ -171,7 +175,7 @@ export class TaskService {
 
     await this.taskRepository.softDelete(taskId)
 
-    return this.responseService.formatSuccess(null, 'Task deleted successfully.')
+    return this.responseService.formatSuccess(null, await this.i18n.translate('task.deleted'));
   }
 
   // Delete task by admin
@@ -180,7 +184,7 @@ export class TaskService {
     const isTaskExists = await this.taskRepository.findOneBy({ id: taskId, isActive: true })
     if (!isTaskExists) {
       throw new CustomHttpException(
-        'Task not found.',
+        await this.i18n.translate('task.notFound'),
         HttpStatus.NOT_FOUND,
         'NOT_FOUND'
       );
@@ -188,7 +192,7 @@ export class TaskService {
 
     await this.taskRepository.softDelete(taskId)
 
-    return this.responseService.formatSuccess(null, 'Task deleted successfully.')
+    return this.responseService.formatSuccess(null, await this.i18n.translate('task.deleted'));
   }
 
 }

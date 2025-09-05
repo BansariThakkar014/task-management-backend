@@ -5,12 +5,15 @@ import { UserRepository } from './user.repository';
 import { CustomHttpException } from 'src/common/exception/http-exception';
 import { UserRole } from './entity/user.entity';
 import { TaskRepository } from '../task/task.repository';
+import { BaseResponseDto } from 'src/common/dto/base-response.dto';
+import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class UserService {
   constructor(private readonly userRepository: UserRepository,
     private readonly taskRepository: TaskRepository,
-    private readonly responseService: ResponseService
+    private readonly responseService: ResponseService,
+    private readonly i18n: I18nService
   ) { }
 
   // Get all users
@@ -50,16 +53,16 @@ export class UserService {
       total,
       page,
       limit,
-      'Users fetched successfully.');
+      await this.i18n.translate('user.listSuccess'));
   }
 
   // Delete user by id
-  async deleteUserById(userId: number) {
+  async deleteUserById(userId: number): Promise<BaseResponseDto<null>> {
     // Check if user exist or not
     const isExists = await this.userRepository.findOneBy({ id: userId, isActive: true })
     if (!isExists) {
       throw new CustomHttpException(
-        'User not found.',
+        await this.i18n.translate('user.notFound'),
         HttpStatus.NOT_FOUND,
         'NOT_FOUND'
       )
@@ -67,7 +70,7 @@ export class UserService {
 
     if(isExists.role === UserRole.ADMIN){
       throw new CustomHttpException(
-        'Admin user cannot be deleted.',
+        'Admin cannot be deleted.',
         HttpStatus.FORBIDDEN,
         'FORBIDDEN'
       )
@@ -78,6 +81,6 @@ export class UserService {
     // Delete user's tasks
     await this.taskRepository.softDelete({ userId })
 
-    return this.responseService.formatSuccess(null, 'User deleted successfully.')
+    return this.responseService.formatSuccess(null, await this.i18n.translate('user.deleted'))
   }
 }
